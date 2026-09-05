@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface ActivityItem {
+  id: number;
+  action: string;
+  planTitle: string;
   status: string;
+  createdAt: Date;
 }

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SprintForge"
+description = "A PRD-to-sprint planning workspace that turns feature ideas into structured requirements, user stories, engineering tasks, and capacity-aware sprint plans."
+version = "1.0.0"
+id = "artifacts/sprintforge"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23888
+
+[services.development]
+run = "pnpm --filter @workspace/sprintforge run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sprintforge", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sprintforge/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23888"
+BASE_PATH = "/"

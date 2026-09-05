@@ -3,20 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SprintForge planning API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: plans
+  - name: admin
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +24,436 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /plans:
+    get:
+      operationId: listPlans
+      tags: [plans]
+      summary: List saved plans
+      responses:
+        "200":
+          description: Saved plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanSummary"
+    post:
+      operationId: createPlan
+      tags: [plans]
+      summary: Create and process a plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
+      responses:
+        "201":
+          description: Generated plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plan"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /plans/{id}:
+    get:
+      operationId: getPlan
+      tags: [plans]
+      summary: Get a generated plan
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200":
+          description: Generated plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plan"
+        "404":
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: updatePlanTitle
+      tags: [plans]
+      summary: Rename a saved plan
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanTitleUpdate"
+      responses:
+        "200":
+          description: Renamed plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanSummary"
+        "400":
+          description: Invalid title
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deletePlan
+      tags: [plans]
+      summary: Delete a saved plan
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get planning activity statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
 components:
+  parameters:
+    PlanId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
+      required: [status]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    PlanInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          minLength: 1
+        targetUsers:
+          type: string
+          minLength: 1
+        businessGoal:
+          type: string
+          minLength: 1
+        mainProblem:
+          type: string
+          minLength: 1
+        mustHaveRequirements:
+          type: string
+        niceToHaveRequirements:
+          type: string
+        constraints:
+          type: string
+        sprintLength:
+          type: integer
+          minimum: 1
+          maximum: 4
+        teamCapacity:
+          type: integer
+          minimum: 1
+          maximum: 200
+        availableSprints:
+          type: integer
+          minimum: 1
+          maximum: 12
       required:
-        - status
-
+        - title
+        - description
+        - targetUsers
+        - businessGoal
+        - mainProblem
+        - mustHaveRequirements
+        - niceToHaveRequirements
+        - constraints
+        - sprintLength
+        - teamCapacity
+        - availableSprints
+    PlanTitleUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required: [title]
+    PlanSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        status:
+          type: string
+          enum: [completed, failed, processing]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        storyCount:
+          type: integer
+        taskCount:
+          type: integer
+        sprintCount:
+          type: integer
+      required: [id, title, status, createdAt, updatedAt, storyCount, taskCount, sprintCount]
+    PriorityScore:
+      type: object
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        label:
+          type: string
+          enum: [Critical, High, Medium, Low]
+        businessValue:
+          type: integer
+        userImpact:
+          type: integer
+        urgency:
+          type: integer
+        riskReduction:
+          type: integer
+        explanation:
+          type: string
+      required: [score, label, businessValue, userImpact, urgency, riskReduction, explanation]
+    Prd:
+      type: object
+      properties:
+        executiveSummary:
+          type: string
+        problemStatement:
+          type: string
+        targetUsers:
+          type: array
+          items: { type: string }
+        goals:
+          type: array
+          items: { type: string }
+        nonGoals:
+          type: array
+          items: { type: string }
+        functionalRequirements:
+          type: array
+          items: { type: string }
+        nonFunctionalRequirements:
+          type: array
+          items: { type: string }
+        assumptions:
+          type: array
+          items: { type: string }
+        risks:
+          type: array
+          items: { type: string }
+        successMetrics:
+          type: array
+          items: { type: string }
+        acceptanceCriteria:
+          type: array
+          items: { type: string }
+      required: [executiveSummary, problemStatement, targetUsers, goals, nonGoals, functionalRequirements, nonFunctionalRequirements, assumptions, risks, successMetrics, acceptanceCriteria]
+    UserStory:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        statement:
+          type: string
+        acceptanceCriteria:
+          type: array
+          items: { type: string }
+        priority:
+          $ref: "#/components/schemas/PriorityScore"
+        effortPoints:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13]
+        effortReason:
+          type: string
+      required: [id, title, statement, acceptanceCriteria, priority, effortPoints, effortReason]
+    EngineeringTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [frontend, backend, database, testing, deployment]
+        priority:
+          $ref: "#/components/schemas/PriorityScore"
+        effortPoints:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13]
+        effortReason:
+          type: string
+        dependencyIds:
+          type: array
+          items: { type: integer }
+        dependencyLabels:
+          type: array
+          items: { type: string }
+        assignedSprint:
+          type: [integer, "null"]
+        allocationStatus:
+          type: string
+          enum: [allocated, unallocated]
+      required: [id, title, description, category, priority, effortPoints, effortReason, dependencyIds, dependencyLabels, assignedSprint, allocationStatus]
+    Sprint:
+      type: object
+      properties:
+        number:
+          type: integer
+        label:
+          type: string
+        lengthWeeks:
+          type: integer
+        capacity:
+          type: integer
+        usedPoints:
+          type: integer
+        remainingPoints:
+          type: integer
+        taskIds:
+          type: array
+          items: { type: integer }
+        taskCount:
+          type: integer
+      required: [number, label, lengthWeeks, capacity, usedPoints, remainingPoints, taskIds, taskCount]
+    Plan:
+      allOf:
+        - $ref: "#/components/schemas/PlanSummary"
+        - type: object
+          properties:
+            input:
+              $ref: "#/components/schemas/PlanInput"
+            prd:
+              $ref: "#/components/schemas/Prd"
+            stories:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserStory"
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/EngineeringTask"
+            sprints:
+              type: array
+              items:
+                $ref: "#/components/schemas/Sprint"
+            decisionExplanation:
+              type: array
+              items: { type: string }
+          required: [input, prd, stories, tasks, sprints, decisionExplanation]
+    PriorityDistribution:
+      type: object
+      properties:
+        label:
+          type: string
+        count:
+          type: integer
+      required: [label, count]
+    SprintAllocationSummary:
+      type: object
+      properties:
+        sprint:
+          type: string
+        usedPoints:
+          type: integer
+        capacity:
+          type: integer
+        taskCount:
+          type: integer
+      required: [sprint, usedPoints, capacity, taskCount]
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+        planTitle:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, action, planTitle, status, createdAt]
+    AdminStats:
+      type: object
+      properties:
+        totalPlans:
+          type: integer
+        totalStories:
+          type: integer
+        totalTasks:
+          type: integer
+        completedRuns:
+          type: integer
+        failedRuns:
+          type: integer
+        averageTasksPerPlan:
+          type: number
+        priorityDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriorityDistribution"
+        sprintAllocation:
+          type: array
+          items:
+            $ref: "#/components/schemas/SprintAllocationSummary"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+      required: [totalPlans, totalStories, totalTasks, completedRuns, failedRuns, averageTasksPerPlan, priorityDistribution, sprintAllocation, recentActivity]

@@ -1,0 +1,217 @@
+Build a complete full-stack MVP called “SprintForge” for this assignment:
+
+Product: PRD → Sprint Planner
+
+Purpose: A product manager enters a feature idea. The system converts it into a structured PRD, user stories, engineering tasks, priorities, effort estimates, dependencies, and sprint allocations.
+
+Use the simplest reliable Replit-compatible stack:
+
+- React + TypeScript frontend
+- Express + TypeScript backend
+- SQLite database
+- Clean responsive CSS or Tailwind if already configured
+- Rule-based generation by default so the app works without an API key
+- Optional OpenAI integration only when OPENAI_API_KEY exists
+- One Replit run command that starts the complete application
+
+Do not add authentication, payments, teams, email, or unnecessary features.
+
+USER WORKFLOW
+
+Create a “New Plan” page with a structured form containing:
+
+- Feature title
+- Feature description
+- Target users
+- Business goal
+- Main problem
+- Must-have requirements
+- Nice-to-have requirements
+- Constraints
+- Desired sprint length: 1–4 weeks
+- Team capacity in story points
+- Number of available sprints
+
+After submission, send the data to the backend and generate:
+
+1. PRD
+   - Executive summary
+   - Problem statement
+   - Target users
+   - Goals
+   - Non-goals
+   - Functional requirements
+   - Non-functional requirements
+   - Assumptions
+   - Risks
+   - Success metrics
+   - Acceptance criteria
+
+2. User stories
+   - Title
+   - “As a / I want / So that” statement
+   - Acceptance criteria
+   - Priority
+   - Effort points
+
+3. Engineering tasks
+   - Task title
+   - Description
+   - Category: frontend, backend, database, testing, or deployment
+   - Priority
+   - Effort points
+   - Dependencies
+   - Assigned sprint
+
+SMART RULE-BASED LOGIC
+
+Implement transparent deterministic logic:
+
+Priority score from 0–100:
+
+- Business value: 35%
+- User impact: 30%
+- Urgency: 20%
+- Risk reduction: 15%
+
+Convert score into:
+
+- 80–100: Critical
+- 60–79: High
+- 40–59: Medium
+- 0–39: Low
+
+Effort must use Fibonacci values: 1, 2, 3, 5, 8, or 13.
+
+Use keywords and requirement complexity to estimate effort. Display the reason for each estimate.
+
+Detect basic dependencies using task categories and keywords. Apply these rules:
+
+- Database/schema work precedes backend API work
+- Backend API work precedes connected frontend work
+- Implementation precedes testing
+- Testing precedes deployment
+- A task cannot be assigned before its dependencies
+
+Allocate tasks into sprints by:
+
+- Priority first
+- Dependencies second
+- Available capacity third
+- Never exceeding the configured sprint capacity
+- Clearly marking unallocated tasks when capacity is insufficient
+
+OUTPUT EXPERIENCE
+
+Create a results page with these tabs:
+
+- PRD
+- User Stories
+- Engineering Tasks
+- Sprint Plan
+- Risks and Metrics
+
+Include:
+
+- Priority badges
+- Effort points
+- Dependency labels
+- Sprint capacity used versus available
+- Explanations for scoring decisions
+- Edit plan title
+- Delete plan
+- Copy PRD
+- Export the entire plan as a Markdown file
+
+DATABASE
+
+Persist the workflow in SQLite using suitable tables for:
+
+- Plans
+- User stories
+- Tasks
+- Sprints
+- Processing runs or activity logs
+
+Store timestamps and processing status.
+
+Create backend endpoints for:
+
+- Creating and processing a plan
+- Listing saved plans
+- Retrieving one plan
+- Updating a plan title
+- Deleting a plan
+- Retrieving admin statistics
+
+Validate required inputs on both frontend and backend. Return useful errors without exposing stack traces.
+
+SAVED PLANS
+
+Create a saved-plans page showing:
+
+- Plan name
+- Creation date
+- Status
+- Number of stories
+- Number of tasks
+- Number of sprints
+- Open, rename, and delete actions
+
+ADMIN DASHBOARD
+
+Create a simple monitoring dashboard showing:
+
+- Total plans created
+- Total user stories generated
+- Total engineering tasks generated
+- Completed and failed processing runs
+- Average tasks per plan
+- Recent activity
+- Priority distribution
+- Sprint allocation summary
+
+Use real database data, not hard-coded dashboard statistics.
+
+DESIGN
+
+Create a professional SaaS interface with:
+
+- Sidebar navigation: Dashboard, New Plan, Saved Plans, Admin
+- Clear typography
+- Blue/violet accent colour
+- Accessible contrast
+- Responsive desktop and mobile layouts
+- Loading, empty, success, and error states
+- No excessive animations or decorative sections
+
+SEED DATA
+
+Add one realistic sample project that demonstrates the system, but keep it clearly identified as sample data.
+
+GIT PROGRESSION
+
+Initialize Git if necessary and make meaningful commits after these stages:
+
+1. Project foundation
+2. Database and backend
+3. Planning logic
+4. Frontend workflow
+5. Admin dashboard
+
+Do not create or push a GitHub repository yet.
+
+QUALITY REQUIREMENTS
+
+- The application must work without an OpenAI key
+- Do not display fake AI-generated content
+- Keep the rule-based generator in separate reusable service files
+- Keep scoring and sprint-allocation logic easy to explain during an assignment demonstration
+- Avoid placeholder buttons
+- Avoid broken routes
+- Avoid TypeScript and console errors
+- Include a small “How this decision was made” section in generated plans
+- Test the complete flow: input → processing → database → output → admin statistics
+- Do not add features outside this specification
+
+When finished, provide a short summary of what was implemented, the run command, and any known issue. Do not begin deployment or GitHub setup.
