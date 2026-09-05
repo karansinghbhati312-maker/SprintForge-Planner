@@ -1,1 +1,2 @@
 - [OpenAPI Zod codegen compatibility](zod-codegen-compatibility.md) — keep Orval-generated Zod syntax aligned with the installed API validation major version.
+- [TypeScript test runner compatibility](test-runner-compatibility.md) — native Node type-stripping tests need explicit TypeScript import extensions and matching compiler settings.

@@ -21,7 +21,7 @@ function splitRequirements(value: string): string[] {
   return parts.length > 0 ? parts : [value.trim()];
 }
 
-function scoreFor(text: string, input: PlanInput): PriorityScore {
+export function scoreFor(text: string, input: PlanInput): PriorityScore {
   const lower = text.toLowerCase();
   const businessValue = Math.min(100, 52 + (input.businessGoal.length > 100 ? 18 : 8) + (lower.includes("revenue") || lower.includes("conversion") ? 20 : 0));
   const userImpact = Math.min(100, 48 + (input.targetUsers.length > 80 ? 16 : 8) + (lower.includes("user") || lower.includes("customer") ? 18 : 0));
@@ -63,6 +63,55 @@ function categoryFor(text: string): EngineeringTask["category"] {
   if (/(test|coverage|qa|acceptance)/.test(lower)) return "testing";
   if (/(deploy|release|production|monitoring)/.test(lower)) return "deployment";
   return "frontend";
+}
+
+export function allocateTasks(
+  tasks: EngineeringTask[],
+  availableSprints: number,
+  teamCapacity: number,
+  sprintLength: number,
+): { tasks: EngineeringTask[]; sprints: Sprint[] } {
+  const allocatedTasks: EngineeringTask[] = tasks.map((task): EngineeringTask => ({
+    ...task,
+    dependencyIds: [...task.dependencyIds],
+    dependencyLabels: [...task.dependencyLabels],
+    assignedSprint: null,
+    allocationStatus: "unallocated" as const,
+  }));
+  const sprints: Sprint[] = Array.from({ length: availableSprints }, (_, index) => ({
+    number: index + 1,
+    label: `Sprint ${index + 1}`,
+    lengthWeeks: sprintLength,
+    capacity: teamCapacity,
+    usedPoints: 0,
+    remainingPoints: teamCapacity,
+    taskIds: [],
+    taskCount: 0,
+  }));
+
+  const orderedTasks = [...allocatedTasks].sort((a, b) => b.priority.score - a.priority.score || a.id - b.id);
+  const placed = new Set<number>();
+  for (const task of orderedTasks) {
+    const earliestSprint = Math.max(
+      0,
+      ...task.dependencyIds.map((dependencyId) => {
+        const dependency = allocatedTasks.find((item) => item.id === dependencyId);
+        return dependency?.assignedSprint ? dependency.assignedSprint - 1 : 0;
+      }),
+    );
+    const target = sprints.slice(earliestSprint).find((sprint) => sprint.remainingPoints >= task.effortPoints);
+    if (target) {
+      task.assignedSprint = target.number;
+      task.allocationStatus = "allocated";
+      target.taskIds.push(task.id);
+      target.usedPoints += task.effortPoints;
+      target.remainingPoints -= task.effortPoints;
+      target.taskCount += 1;
+      placed.add(task.id);
+    }
+  }
+
+  return { tasks: allocatedTasks, sprints };
 }
 
 export function generatePlan(input: PlanInput): GeneratedPlan {
@@ -176,38 +225,10 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
     return task;
   });
 
-  const sprints: Sprint[] = Array.from({ length: input.availableSprints }, (_, index) => ({
-    number: index + 1,
-    label: `Sprint ${index + 1}`,
-    lengthWeeks: input.sprintLength,
-    capacity: input.teamCapacity,
-    usedPoints: 0,
-    remainingPoints: input.teamCapacity,
-    taskIds: [],
-    taskCount: 0,
-  }));
-
-  const orderedTasks = [...tasks].sort((a, b) => b.priority.score - a.priority.score || a.id - b.id);
-  const placed = new Set<number>();
-  for (const task of orderedTasks) {
-    const earliestSprint = Math.max(
-      0,
-      ...task.dependencyIds.map((dependencyId) => {
-        const dependency = tasks.find((item) => item.id === dependencyId);
-        return dependency?.assignedSprint ? dependency.assignedSprint - 1 : 0;
-      }),
-    );
-    const target = sprints.slice(earliestSprint).find((sprint) => sprint.remainingPoints >= task.effortPoints);
-    if (target) {
-      task.assignedSprint = target.number;
-      task.allocationStatus = "allocated";
-      target.taskIds.push(task.id);
-      target.usedPoints += task.effortPoints;
-      target.remainingPoints -= task.effortPoints;
-      target.taskCount += 1;
-      placed.add(task.id);
-    }
-  }
+  const allocation = allocateTasks(tasks, input.availableSprints, input.teamCapacity, input.sprintLength);
+  const allocatedTasks = allocation.tasks;
+  const sprints = allocation.sprints;
+  const placed = new Set(allocatedTasks.filter((task) => task.allocationStatus === "allocated").map((task) => task.id));
 
   const decisionExplanation = [
     "Priority combines business value (35%), user impact (30%), urgency (20%), and risk reduction (15%).",
@@ -216,5 +237,5 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
     `${placed.size} of ${tasks.length} engineering tasks fit within the configured ${input.availableSprints} sprint${input.availableSprints === 1 ? "" : "s"} and ${input.teamCapacity}-point capacity.`,
   ];
 
-  return { input, prd, stories, tasks, sprints, decisionExplanation };
+  return { input, prd, stories, tasks: allocatedTasks, sprints, decisionExplanation };
 }

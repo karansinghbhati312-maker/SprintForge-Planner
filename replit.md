@@ -7,6 +7,7 @@ SprintForge turns a product feature idea into an explainable PRD, user stories, 
 - `pnpm --filter @workspace/api-server run dev` — run the API server
 - `pnpm --filter @workspace/sprintforge run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run test` — deterministic planning, API persistence, and Markdown export regression tests
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push development schema changes

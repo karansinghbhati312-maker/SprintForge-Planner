@@ -50,6 +50,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import { buildMarkdown, buildPrdText } from '@/lib/markdown';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -142,7 +143,7 @@ function Shell({ children }: { children: ReactNode }) {
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = href === '/' ? location === '/' : location.startsWith(href);
             return (
-              <Link key={href} href={href} className={`nav-link ${active ? 'nav-link-active' : ''}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}>
+              <Link key={href} href={href} aria-label={label} title={label} className={`nav-link ${active ? 'nav-link-active' : ''}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}>
                 <Icon size={16} strokeWidth={active ? 2.4 : 1.8} /><span>{label}</span>
               </Link>
             );
@@ -284,13 +285,13 @@ function NewPlanPage() {
           <div className="mb-6 flex items-center gap-3"><div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Target size={16} /></div><div><h2 className="text-sm font-extrabold">Product brief</h2><p className="text-[11px] text-muted-foreground">Start with the decision you need to make.</p></div></div>
           <div className="field-grid">
             <div className="field-full"><label className="field-label" htmlFor="plan-title">Feature title</label><input id="plan-title" className="field-input" required maxLength={160} value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="e.g. Guided onboarding for workspace admins" data-testid="input-plan-title" /></div>
-            <Field label="What are you building?" hint="Describe the feature in plain language." full><textarea className="field-input" required value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="A focused release that..." data-testid="input-plan-description" /></Field>
-            <Field label="Target users" hint="Who feels the problem most directly?"><textarea className="field-input" required value={form.targetUsers} onChange={(e) => update('targetUsers', e.target.value)} placeholder="Workspace admins at growing teams" data-testid="input-plan-target-users" /></Field>
-            <Field label="Business goal" hint="What changes if this works?"><textarea className="field-input" required value={form.businessGoal} onChange={(e) => update('businessGoal', e.target.value)} placeholder="Reduce time-to-value..." data-testid="input-plan-business-goal" /></Field>
-            <Field label="Main problem" full><textarea className="field-input" required value={form.mainProblem} onChange={(e) => update('mainProblem', e.target.value)} placeholder="Today, users struggle to..." data-testid="input-plan-main-problem" /></Field>
-            <Field label="Must-have requirements" hint="One requirement per line." full><textarea className="field-input" value={form.mustHaveRequirements} onChange={(e) => update('mustHaveRequirements', e.target.value)} placeholder="Invite teammates&#10;Track setup progress" data-testid="input-plan-must-haves" /></Field>
-            <Field label="Nice-to-have requirements" hint="Useful, but not at the expense of the core." full><textarea className="field-input" value={form.niceToHaveRequirements} onChange={(e) => update('niceToHaveRequirements', e.target.value)} placeholder="CSV export&#10;Custom reminders" data-testid="input-plan-nice-to-haves" /></Field>
-            <Field label="Constraints" hint="Dependencies, deadlines, technical boundaries." full><textarea className="field-input" value={form.constraints} onChange={(e) => update('constraints', e.target.value)} placeholder="Must ship before the Q3 launch..." data-testid="input-plan-constraints" /></Field>
+            <Field id="plan-description" label="What are you building?" hint="Describe the feature in plain language." full><textarea id="plan-description" className="field-input" required value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="A focused release that..." data-testid="input-plan-description" /></Field>
+            <Field id="plan-target-users" label="Target users" hint="Who feels the problem most directly?"><textarea id="plan-target-users" className="field-input" required value={form.targetUsers} onChange={(e) => update('targetUsers', e.target.value)} placeholder="Workspace admins at growing teams" data-testid="input-plan-target-users" /></Field>
+            <Field id="plan-business-goal" label="Business goal" hint="What changes if this works?"><textarea id="plan-business-goal" className="field-input" required value={form.businessGoal} onChange={(e) => update('businessGoal', e.target.value)} placeholder="Reduce time-to-value..." data-testid="input-plan-business-goal" /></Field>
+            <Field id="plan-main-problem" label="Main problem" full><textarea id="plan-main-problem" className="field-input" required value={form.mainProblem} onChange={(e) => update('mainProblem', e.target.value)} placeholder="Today, users struggle to..." data-testid="input-plan-main-problem" /></Field>
+            <Field id="plan-must-haves" label="Must-have requirements" hint="One requirement per line." full><textarea id="plan-must-haves" className="field-input" value={form.mustHaveRequirements} onChange={(e) => update('mustHaveRequirements', e.target.value)} placeholder="Invite teammates&#10;Track setup progress" data-testid="input-plan-must-haves" /></Field>
+            <Field id="plan-nice-to-haves" label="Nice-to-have requirements" hint="Useful, but not at the expense of the core." full><textarea id="plan-nice-to-haves" className="field-input" value={form.niceToHaveRequirements} onChange={(e) => update('niceToHaveRequirements', e.target.value)} placeholder="CSV export&#10;Custom reminders" data-testid="input-plan-nice-to-haves" /></Field>
+            <Field id="plan-constraints" label="Constraints" hint="Dependencies, deadlines, technical boundaries." full><textarea id="plan-constraints" className="field-input" value={form.constraints} onChange={(e) => update('constraints', e.target.value)} placeholder="Must ship before the Q3 launch..." data-testid="input-plan-constraints" /></Field>
           </div>
         </section>
         <div className="space-y-5">
@@ -314,8 +315,8 @@ function NewPlanPage() {
   );
 }
 
-function Field({ label, hint, full, children }: { label: string; hint?: string; full?: boolean; children: ReactNode }) {
-  return <div className={full ? 'field-full' : ''}><label className="field-label">{label}</label>{children}{hint && <div className="field-hint">{hint}</div>}</div>;
+function Field({ id, label, hint, full, children }: { id: string; label: string; hint?: string; full?: boolean; children: ReactNode }) {
+  return <div className={full ? 'field-full' : ''}><label className="field-label" htmlFor={id}>{label}</label>{children}{hint && <div className="field-hint">{hint}</div>}</div>;
 }
 
 function NumberField({ label, suffix, min, max, value, onChange, testId }: { label: string; suffix: string; min: number; max: number; value: number; onChange: (value: number) => void; testId: string }) {
@@ -422,13 +423,6 @@ function SprintsView({ plan }: { plan: Plan }) {
 
 function RisksView({ plan }: { plan: Plan }) {
   return <div className="grid gap-8 lg:grid-cols-[1fr_.9fr]"><div><ContentBlock title="Known risks"><BulletList items={plan.prd.risks} /></ContentBlock><div className="mt-8"><ContentBlock title="Success metrics"><BulletList items={plan.prd.successMetrics} checked /></ContentBlock></div></div><div><div className="mb-3 text-sm font-extrabold">Decision explanation</div><div className="space-y-3">{plan.decisionExplanation.map((item, index) => <div className="flex gap-3 text-sm leading-6 text-muted-foreground" key={`${item}-${index}`}><span className="mono mt-0.5 text-[10px] text-primary">0{index + 1}</span><span>{item}</span></div>)}</div></div></div>;
-}
-
-function buildPrdText(plan: Plan) {
-  return [`# ${plan.title}`, '', '## Executive summary', plan.prd.executiveSummary, '', '## Problem statement', plan.prd.problemStatement, '', '## Functional requirements', ...plan.prd.functionalRequirements.map((item) => `- ${item}`), '', '## Success metrics', ...plan.prd.successMetrics.map((item) => `- ${item}`)].join('\n');
-}
-function buildMarkdown(plan: Plan) {
-  return [buildPrdText(plan), '', '## User stories', ...plan.stories.map((story) => `### ${story.title}\n${story.statement}\n\nEffort: ${story.effortPoints} points`), '', '## Engineering tasks', ...plan.tasks.map((task) => `- [${task.assignedSprint ? `Sprint ${task.assignedSprint}` : 'Unallocated'}] ${task.title} (${task.effortPoints} points)`), '', '## Sprint plan', ...plan.sprints.map((sprint) => `- ${sprint.label}: ${sprint.usedPoints}/${sprint.capacity} points`)].join('\n');
 }
 
 function AdminPage() {

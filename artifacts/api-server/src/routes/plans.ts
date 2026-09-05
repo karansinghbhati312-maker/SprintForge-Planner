@@ -77,6 +77,19 @@ async function detailFor(plan: typeof plansTable.$inferSelect) {
   ]);
 
   const summary = await summaryFor(plan);
+  const prd = plan.prd ?? {
+    executiveSummary: "This plan could not be processed into a complete PRD.",
+    problemStatement: plan.mainProblem,
+    targetUsers: [plan.targetUsers],
+    goals: [plan.businessGoal],
+    nonGoals: [],
+    functionalRequirements: [],
+    nonFunctionalRequirements: [],
+    assumptions: [],
+    risks: ["Processing failed before generated risks were available."],
+    successMetrics: [],
+    acceptanceCriteria: [],
+  };
   return {
     ...summary,
     input: {
@@ -92,7 +105,7 @@ async function detailFor(plan: typeof plansTable.$inferSelect) {
       teamCapacity: plan.teamCapacity,
       availableSprints: plan.availableSprints,
     },
-    prd: plan.prd,
+    prd,
     stories: stories.map((story) => ({
       id: story.id,
       title: story.title,
