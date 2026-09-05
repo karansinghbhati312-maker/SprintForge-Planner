@@ -1,0 +1,1 @@
+- [OpenAPI Zod codegen compatibility](zod-codegen-compatibility.md) — keep Orval-generated Zod syntax aligned with the installed API validation major version.

@@ -1,45 +1,53 @@
-# [Project name]
+# SprintForge
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SprintForge turns a product feature idea into an explainable PRD, user stories, engineering tasks, and a capacity-aware sprint plan.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server
+- `pnpm --filter @workspace/sprintforge run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/db run push` — push development schema changes
+- Required env: `DATABASE_URL` — managed PostgreSQL connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Wouter + TanStack Query
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- DB: managed PostgreSQL + Drizzle ORM
+- Validation: generated OpenAPI Zod schemas
+- API codegen: Orval
+- Build: Vite and esbuild
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — source-of-truth API contract
+- `lib/db/src/schema/` — plans, stories, tasks, sprints, and processing runs
+- `artifacts/api-server/src/lib/planning.ts` — deterministic priority, effort, dependency, and sprint allocation logic
+- `artifacts/api-server/src/routes/plans.ts` — plan CRUD, processing, and admin statistics
+- `artifacts/sprintforge/src/App.tsx` — responsive product workflow and results experience
+- `artifacts/sprintforge/src/index.css` — Forge Console visual system
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Planning output is deterministic and key decisions are returned with explanations, so the app works without an AI key and remains demo-friendly.
+- The app uses the workspace-managed PostgreSQL database rather than introducing a second database runtime.
+- The frontend consumes generated API hooks only; the OpenAPI file is the contract between UI and server.
+- Sample data is seeded once on an empty database and is marked `[Sample]` in the saved-plan library.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Overview dashboard with live plan, story, task, and engine health summaries
+- New plan workflow with required product context and capacity model
+- Generated plan detail with PRD, stories, engineering tasks, sprint allocation, risks, metrics, decision explanations, copy, and Markdown export
+- Saved plans with search, open, rename, and delete actions
+- Admin monitoring dashboard with real database statistics and recent activity
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- The managed workflows provide `PORT` and `BASE_PATH`; do not start the app with a root-level `pnpm dev`.
+- Run API codegen after changing `lib/api-spec/openapi.yaml`.
+- Run `pnpm --filter @workspace/db run push` after changing database schema files.
